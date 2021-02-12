@@ -9,20 +9,19 @@ pub struct WoopPlugin { }
 impl Plugin for WoopPlugin {
     async fn room_message(&self, client: &Client, room: &RoomState, msg_body: &str) {
         if msg_body.starts_with(".woop") {
-            let response = match extract_num(msg_body) {
-                Some(n) => woop(n),
-                None => woop(10.0)
-            };
+            let num = extract_num(msg_body);
+            let response = woop(num);
             self.send_message(client, room, &response).await;
         }
     }
 }
 
 // extract e.g. 2.5 out of a string like ".woop 2.5"
-fn extract_num(woopstr: &str) -> Option<f32> {
+fn extract_num(woopstr: &str) -> f32 {
     woopstr
         .strip_prefix(".woop")
         .and_then(|n| n.trim().parse().ok())
+        .unwrap_or(10.0)
 }
 
 // convert e.g. 2.5 into "WOOP WOOP WO"
@@ -71,13 +70,13 @@ mod tests {
 
     #[test]
     fn extract_num_woop() {
-        assert_eq!(extract_num(".woop"), None);
-        assert_eq!(extract_num(".woop woop"), None);
-        assert_eq!(extract_num(".woop 🎉"), None);
-        assert_eq!(extract_num(".woop 10 10"), None);
+        assert_eq!(extract_num(".woop"), 10.0);
+        assert_eq!(extract_num(".woop woop"), 10.0);
+        assert_eq!(extract_num(".woop 🎉"), 10.0);
+        assert_eq!(extract_num(".woop 4 4"), 10.0);
 
-        assert_eq!(extract_num(".woop 10"), Some(10.0));
-        assert_eq!(extract_num(".woop 2.5"), Some(2.5));
-        assert_eq!(extract_num(".woop 999999999999999999999999999999999"), Some(999999999999999999999999999999999.0));
+        assert_eq!(extract_num(".woop 10"), 10.0);
+        assert_eq!(extract_num(".woop 2.5"), 2.5);
+        assert_eq!(extract_num(".woop 999999999999999999999999999999999"), 999999999999999999999999999999999.0);
     }
 }

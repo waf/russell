@@ -3,12 +3,14 @@
  */
 
 mod autojoin;
+mod bacronym;
 mod party;
 mod woop;
 
 fn register_plugins() -> Vec<Box<dyn Plugin>> {
     vec![
         Box::new(autojoin::AutoJoinPlugin {}),
+        Box::new(bacronym::BacronymPlugin::new()),
         Box::new(party::PartyPlugin {}),
         Box::new(woop::WoopPlugin {}),
     ]
@@ -39,6 +41,9 @@ pub trait Plugin : Send + Sync {
     // helper functions that provide a higher-level API for plugins
     async fn room_message(&self, _: &Client, _: &RoomState, _: &str) {}
     async fn send_message(&self, client: &Client, room: &RoomState, message: &str) {
+        if message.trim().is_empty() {
+            return;
+        }
 
         let content = AnyMessageEventContent::RoomMessage(MessageEventContent::text_plain(
             message
